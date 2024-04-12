@@ -6,7 +6,7 @@ import XCTest
 import RandomizableMacros
 
 let testMacros: [String: Macro.Type] = [
-    "randomizable": RandomizableMacro.self,
+    "Randomizable": RandomizableMacro.self,
 ]
 #endif
 
@@ -25,7 +25,17 @@ final class RandomizableTests: XCTestCase {
                 private var ignoredPrivateProperty = 0
             }
             """,
-            expandedSource: """
+            expandedSource:
+            """
+            struct Flight {
+                let id: Int
+                let destination: String
+                
+                static let ignoredStaticProperty = ""
+                var ignoredComputedProperty: String { "" }
+                private var ignoredPrivateProperty = 0
+            }
+            
             extension Flight: Randomizable {
                 static func makeRandomWith(
                     id: Int = .makeRandom(),
@@ -49,6 +59,31 @@ final class RandomizableTests: XCTestCase {
     }
     
     func testMacro_withEnum() throws {
+        assertMacroExpansion(
+            """
+            @Randomizable
+            public enum Service {
+                case flight
+                case train
+                case car
+            }
+            """,
+            expandedSource:
+            """
+            public enum Service {
+                case flight
+                case train
+                case car
+            }
+            
+            extension Service: Randomizable {
+                static public func makeRandom() -> Self {
+                    [.flight, .train, .car].randomElement()!
+                }
+            }
+            """,
+            macros: testMacros
+        )
     }
     
     func testMacro_withClass() throws {
