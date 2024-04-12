@@ -48,43 +48,6 @@ final class RandomizableTests: XCTestCase {
         #endif
     }
     
-//    func testMacro_withStruct() throws {
-//        #if canImport(RandomizableMacros)
-//        assertMacroExpansion(
-//            """
-//            @Randomizable
-//            struct Flight {
-//                let id: Int
-//                let destination: String
-//                
-//                static let ignoredStaticProperty = ""
-//                var ignoredComputedProperty: String { "" }
-//                private var ignoredPrivateProperty = 0
-//            }
-//            """,
-//            expandedSource: """
-//            extension Flight: Randomizable {
-//                static func makeRandomWith(
-//                    id: Int = .makeRandom(),
-//                    destination: String = .makeRandom()
-//                ) -> Self {
-//                    .init(
-//                        id: id,
-//                        destination: destination
-//                    )
-//                }
-//                static func makeRandom() -> Self {
-//                    makeRandomWith()
-//                }
-//            }
-//            """,
-//            macros: testMacros
-//        )
-//#else
-//        throw XCTSkip("macros are only supported when running tests for the host platform")
-//        #endif
-//    }
-    
     func testMacro_withEnum() throws {
     }
     
