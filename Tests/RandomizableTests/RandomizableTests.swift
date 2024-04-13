@@ -86,6 +86,9 @@ final class RandomizableTests: XCTestCase {
         )
     }
     
+    func testMacro_withEnum_withAssociatedValues() throws {
+    }
+    
     func testMacro_withClass() throws {
     }
     

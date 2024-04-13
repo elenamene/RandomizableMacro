@@ -12,6 +12,7 @@ public struct RandomizableMacro: ExtensionMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
+#if DEBUG
         let syntax = switch declaration.kind {
         case .structDecl:
             try generateExtensionForStruct(decl: declaration, type: type)
@@ -22,14 +23,12 @@ public struct RandomizableMacro: ExtensionMacro {
         case .protocolDecl:
             try generateExtensionForProtocol(decl: declaration, type: type)
         default:
-            let error = Diagnostic(
-                node: node,
-                message: DiagnosticError.notAValidType
-            )
-            context.diagnose(error)
             throw DiagnosticError.notAValidType
         }
         return syntax.map { [$0] } ?? []
+#else
+   return []
+#endif
     }
 }
 
