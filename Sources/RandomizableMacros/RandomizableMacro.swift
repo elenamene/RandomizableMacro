@@ -38,20 +38,26 @@ private extension RandomizableMacro {
     
     static func generateExtensionForStruct(decl: some DeclGroupSyntax, type: some TypeSyntaxProtocol) throws -> ExtensionDeclSyntax {
         try ExtensionDeclSyntax("extension \(type): Randomizable") {
+            // Use init parameters if present else use stored properties
+            let parameters: [Parameter] = if let initParams = decl.firstInitializerParameters {
+                initParams.map { $0.toDeclParameter }
+            } else {
+                decl.propertiesToInitialize.map { $0.toDeclParameter }
+            }
             
-            // TODO: Add support for custom init in struct
-            
-            let declParameters = decl
-                .propertiesToInitialize
-                .map { "\n\($0.propertyName): \($0.propertyType) = .makeRandom()" }
+            let funcDeclParameters = parameters
+                .compactMap { "\n\($0.name): \($0.type) = .makeRandom()" }
                 .joined(separator: ", ")
             
-            let initParameters = decl.propertiesToInitialize
-                .map { "\n\($0.propertyName): \($0.propertyName)" }
+            let funcBlocInitParameters = parameters
+                .map {
+                    if $0.label == "_" { return "\n\($0.name)" }
+                    return  "\n\($0.name): \($0.name)"
+                }
                 .joined(separator: ", ")
             
-            try FunctionDeclSyntax("static\(raw: decl.accessLevel) func makeRandomWith(\(raw: declParameters)\n) -> Self") {
-                ".init(\(raw: initParameters)\n)"
+            try FunctionDeclSyntax("static\(raw: decl.accessLevel) func makeRandomWith(\(raw: funcDeclParameters)\n) -> Self") {
+                ".init(\(raw: funcBlocInitParameters)\n)"
             }
             
             try FunctionDeclSyntax("static\(raw: decl.accessLevel) func makeRandom() -> Self") {

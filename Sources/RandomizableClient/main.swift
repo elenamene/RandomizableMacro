@@ -9,6 +9,17 @@ struct Flight {
     var title: String { ""}
 }
 
+@Randomizable
+struct StructWithInit {
+    let id: Int
+    let name: String
+    
+    init(_ id: Int, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
 extension Flight {
     @Randomizable
     struct Segment {
@@ -39,7 +50,9 @@ private class Trip {
 print(
     Flight.makeRandom(),
     Flight.makeRandomWith(destination: "London"),
-    Flight.makeRandomWith(id: 1234)
+    Flight.makeRandomWith(id: 1234),
+    Service.makeRandom(),
+    StructWithInit.makeRandom(),
+    StructWithInit.makeRandomWith(id: 123),
+    StructWithInit.makeRandomWith(name: "ciao")
 )
-
-print(Service.makeRandom())

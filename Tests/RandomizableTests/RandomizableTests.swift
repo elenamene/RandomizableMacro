@@ -58,6 +58,55 @@ final class RandomizableTests: XCTestCase {
         #endif
     }
     
+    func testMacro_withStruct_withInit() throws {
+        #if canImport(RandomizableMacros)
+        assertMacroExpansion(
+            """
+            @Randomizable
+            struct StructWithInit {
+                let id: Int
+                let name: String
+                
+                init(_ id: Int, name: String) {
+                    self.id = id
+                    self.name = name
+                }
+            }
+            """,
+            expandedSource:
+            """
+            struct StructWithInit {
+                let id: Int
+                let name: String
+                
+                init(_ id: Int, name: String) {
+                    self.id = id
+                    self.name = name
+                }
+            }
+            
+            extension StructWithInit: Randomizable {
+                static func makeRandomWith(
+                    id: Int = .makeRandom(),
+                    name: String = .makeRandom()
+                ) -> Self {
+                    .init(
+                        id,
+                        name: name
+                    )
+                }
+                static func makeRandom() -> Self {
+                    makeRandomWith()
+                }
+            }
+            """,
+            macros: testMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
     func testMacro_withEnum() throws {
         assertMacroExpansion(
             """

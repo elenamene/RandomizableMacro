@@ -72,6 +72,14 @@ extension VariableDeclSyntax {
             .type.as(IdentifierTypeSyntax.self)?
             .name.text ?? ""
     }
+    
+    var toDeclParameter: Parameter {
+        Parameter(
+            name: propertyName,
+            label: propertyName,
+            type: propertyType
+        )
+    }
 }
 
 extension EnumDeclSyntax {
@@ -80,4 +88,24 @@ extension EnumDeclSyntax {
             .compactMap { $0.decl.as(EnumCaseDeclSyntax.self) }
             .map { $0.elements }
     }
+}
+
+extension FunctionParameterSyntax {
+    var toDeclParameter: Parameter {
+        Parameter(
+            name: (secondName ?? firstName).text,
+            label: firstName.text,
+            type: paramType
+        )
+    }
+    
+    var paramType: String {
+        type.as(IdentifierTypeSyntax.self)?.name.text ?? ""
+    }
+}
+
+struct Parameter {
+    let name: String
+    let label: String
+    let type: String
 }
