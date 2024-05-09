@@ -189,22 +189,32 @@ final class RandomizableTests: XCTestCase {
             """
             @Randomizable
             public enum Service {
-                case flight
-                case train
-                case car
+                case flight(id: Int, String)
+                case train(ticket: String)
+                case car(Int)
+                case hotel(_ id: String)
+                case taxi
             }
             """,
             expandedSource:
             """
             public enum Service {
-                case flight
-                case train
-                case car
+                case flight(id: Int, String)
+                case train(ticket: String)
+                case car(Int)
+                case hotel(_ id: String)
+                case taxi
             }
             
             extension Service: Randomizable {
                 public static func makeRandom() -> Self {
-                    [.flight, .train, .car].randomElement()!
+                    [
+                        .flight(id: .makeRandom(), .makeRandom()),
+                        .train(ticket: .makeRandom()),
+                        .car(.makeRandom()),
+                        .hotel(.makeRandom()),
+                        .taxi
+                    ].randomElement()!
                 }
             }
             """,

@@ -43,9 +43,11 @@ extension Flight {
 
 @Randomizable
 public enum Service {
-    case flight
-    case train
-    case car
+    case flight(id: Int, String)
+    case train(ticket: String)
+    case car(Int)
+    case hotel(_ id: String)
+    case taxi
 }
 
 @Randomizable
@@ -69,7 +71,7 @@ print(
     Flight.makeRandom(),
     Flight.makeRandomWith(destination: "London"),
     Flight.makeRandomWith(id: 1234),
-    Service.makeRandom(),
     StructWithInit.makeRandom(),
-    StructWithInit.makeRandomWith(id: 123)
+    StructWithInit.makeRandomWith(id: 123),
+    Service.makeRandom()
 )

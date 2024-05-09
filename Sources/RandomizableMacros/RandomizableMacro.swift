@@ -81,13 +81,11 @@ private extension RandomizableMacro {
         return try ExtensionDeclSyntax("extension \(type): Randomizable") {
             let casesList = cases
                 .flatMap { $0 }
-                .map { ".\($0.name.text)" }
-                .joined(separator: ", ")
-            
-            // TODO: Add support for associated values
+                .map { ".\($0.name.text)\($0.associatedValueList)" }
+                .joined(separator: ",\n")
             
             try FunctionDeclSyntax("\(raw: decl.accessLevel)static func makeRandom() -> Self") {
-                "[\(raw: casesList)].randomElement()!"
+                "[\n\(raw: casesList)\n].randomElement()!"
             }
         }
     }

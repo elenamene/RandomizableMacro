@@ -124,6 +124,25 @@ extension EnumDeclSyntax {
     }
 }
 
+extension EnumCaseElementSyntax {
+    var associatedValueList: String {
+        if let parameterClause {
+            let ss = parameterClause.parameters.first?.firstName
+            let makeRandomList = parameterClause.parameters
+                .map {
+                    if let label = $0.firstName,
+                       !label.text.contains("_") {
+                        return  "\(label): .makeRandom()"
+                    }
+                    return ".makeRandom()"
+                }
+                .joined(separator: ", ")
+            return "(\(makeRandomList))"
+        }
+        return ""
+    }
+}
+
 extension FunctionParameterSyntax {
     var toDeclParameter: Parameter {
         get throws {
