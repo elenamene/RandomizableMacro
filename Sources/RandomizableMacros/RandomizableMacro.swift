@@ -15,15 +15,15 @@ public struct RandomizableMacro: ExtensionMacro {
 #if DEBUG
         let syntax = switch declaration.kind {
         case .structDecl:
-            try generateExtensionForStruct(decl: declaration, type: type)
+            try generateExtensionForStruct(decl: declaration, type: type, context: context)
         case .enumDecl:
             try generateExtensionForEnum(decl: declaration, type: type, context: context)
         case .classDecl:
-            try generateExtensionForClass(decl: declaration, type: type)
+            try generateExtensionForClass(decl: declaration, type: type,context: context)
         case .protocolDecl:
             try generateExtensionForProtocol(decl: declaration, type: type)
         default:
-            throw DiagnosticError.notAValidType
+            throw DiagnosticError.unsupportedSyntaxType
         }
         return syntax.map { [$0] } ?? []
 #else
@@ -36,17 +36,16 @@ private extension RandomizableMacro {
     
     // MARK: - Struct
     
-    static func generateExtensionForStruct(decl: some DeclGroupSyntax, type: some TypeSyntaxProtocol) throws -> ExtensionDeclSyntax {
+    static func generateExtensionForStruct(
+        decl: some DeclGroupSyntax,
+        type: some TypeSyntaxProtocol,
+        context: some MacroExpansionContext
+    ) throws -> ExtensionDeclSyntax {
         try ExtensionDeclSyntax("extension \(type): Randomizable") {
-            // Use init parameters if present else use stored properties
-            let parameters: [Parameter] = if let initParams = decl.firstInitializerParameters {
-                initParams.map { $0.toDeclParameter }
-            } else {
-                decl.propertiesToInitialize.map { $0.toDeclParameter }
-            }
+            let parameters = getParameters(decl: decl, context: context)
             
             let funcDeclParameters = parameters
-                .compactMap { "\n\($0.name): \($0.type) = .makeRandom()" }
+                .compactMap { "\n\($0.name): \($0.type) = \($0.makeRandomString)" }
                 .joined(separator: ", ")
             
             let funcBlocInitParameters = parameters
@@ -56,11 +55,11 @@ private extension RandomizableMacro {
                 }
                 .joined(separator: ", ")
             
-            try FunctionDeclSyntax("static\(raw: decl.accessLevel) func makeRandomWith(\(raw: funcDeclParameters)\n) -> Self") {
+            try FunctionDeclSyntax("\(raw: decl.accessLevel)static func makeRandomWith(\(raw: funcDeclParameters)\n) -> Self") {
                 ".init(\(raw: funcBlocInitParameters)\n)"
             }
             
-            try FunctionDeclSyntax("static\(raw: decl.accessLevel) func makeRandom() -> Self") {
+            try FunctionDeclSyntax("\(raw: decl.accessLevel)static func makeRandom() -> Self") {
                 "makeRandomWith()"
             }
         }
@@ -70,11 +69,12 @@ private extension RandomizableMacro {
     
     static func generateExtensionForEnum(decl: some DeclGroupSyntax, type: some TypeSyntaxProtocol, context: some MacroExpansionContext) throws -> ExtensionDeclSyntax? {
         guard let cases = decl.as(EnumDeclSyntax.self)?.cases, !cases.isEmpty else {
-            let error = Diagnostic(
-                node: decl.memberBlock,
-                message: DiagnosticError.enumWithNoCases
+            context.diagnose(
+                Diagnostic(
+                    node: decl.memberBlock,
+                    message: DiagnosticError.enumWithNoCases
+                )
             )
-            context.diagnose(error)
             return nil
         }
         
@@ -86,7 +86,7 @@ private extension RandomizableMacro {
             
             // TODO: Add support for associated values
             
-            try FunctionDeclSyntax("static \(raw: decl.accessLevel) func makeRandom() -> Self") {
+            try FunctionDeclSyntax("\(raw: decl.accessLevel)static func makeRandom() -> Self") {
                 "[\(raw: casesList)].randomElement()!"
             }
         }
@@ -94,14 +94,87 @@ private extension RandomizableMacro {
     
     // MARK: - Class
     
-    static func generateExtensionForClass(decl: some DeclGroupSyntax, type: some TypeSyntaxProtocol) throws -> ExtensionDeclSyntax {
-        try ExtensionDeclSyntax("Not implemented")
+    static func generateExtensionForClass(
+        decl: some DeclGroupSyntax,
+        type: some TypeSyntaxProtocol,
+        context: some MacroExpansionContext
+    ) throws -> ExtensionDeclSyntax {
+        try ExtensionDeclSyntax("extension \(type): Randomizable") {
+
+            let parameters: [Parameter] =  decl.firstInitializerParameters?.compactMap {
+                if let param = try? $0.toDeclParameter {
+                    return param
+                } else {
+                    context.diagnose(
+                        Diagnostic(
+                            node: $0,
+                            message: DiagnosticError.unsupportedSyntaxType
+                        )
+                    )
+                    return nil
+                }
+            } ?? []
+            
+            let funcDeclParameters = parameters
+                .compactMap { "\n\($0.name): \($0.type) = \($0.makeRandomString)" }
+                .joined(separator: ", ")
+            
+            let funcBlocInitParameters = parameters
+                .map {
+                    if $0.label == "_" { return "\n\($0.name)" }
+                    return  "\n\($0.name): \($0.name)"
+                }
+                .joined(separator: ", ")
+            
+            try FunctionDeclSyntax("\(raw: decl.accessLevel)static func makeRandomWith(\(raw: funcDeclParameters)\n) -> Self") {
+                "self.init(\(raw: funcBlocInitParameters)\n)"
+            }
+            
+            try FunctionDeclSyntax("\(raw: decl.accessLevel)static func makeRandom() -> Self") {
+                "makeRandomWith()"
+            }
+        }
     }
     
     // MARK: - Protocol
     
     static func generateExtensionForProtocol(decl: some DeclGroupSyntax, type: some TypeSyntaxProtocol) throws -> ExtensionDeclSyntax {
         try ExtensionDeclSyntax("Not implemented")
+    }
+    
+    // MARK: - Helpers
+    
+    static func getParameters(decl: some DeclGroupSyntax, context: some MacroExpansionContext) -> [Parameter] {
+        // Use init parameters if present else use stored properties
+        if let initParams = decl.firstInitializerParameters {
+            initParams.compactMap {
+                if let param = try? $0.toDeclParameter {
+                    return param
+                } else {
+                    context.diagnose(
+                        Diagnostic(
+                            node: $0,
+                            message: DiagnosticError.unsupportedSyntaxType
+                        )
+                    )
+                    return nil
+                }
+            }
+        } else {
+            decl.propertiesToInitialize.compactMap {
+                if let param = try? $0.toDeclParameter {
+                    return param
+                } else {
+                    context.diagnose(
+                        Diagnostic(
+                            node: $0,
+                            message: DiagnosticError.unsupportedSyntaxType
+                        )
+                    )
+                    return nil
+                }
+            }
+        }
     }
 }
 

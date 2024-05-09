@@ -3,20 +3,34 @@ import Randomizable
 @Randomizable
 struct Flight {
     let id: Int
-    let destination: String
+    let destination: String?
+    let segments: [Segment]
+    let optionalArray: [Segment]?
+    let dict: [Int: [Segment]]
+    let tuple: (Int, String)
     
-    private let count = 0
-    var title: String { ""}
+    static let ignoredStaticProperty = ""
+    var ignoredComputedProperty: String { "" }
+    private var ignoredPrivateProperty = 0
 }
 
 @Randomizable
 struct StructWithInit {
     let id: Int
-    let name: String
+    let destination: String?
+    let flights: [Flight]
+    let dict: [Int: [Flight]]
     
-    init(_ id: Int, name: String) {
+    init(
+        _ id: Int,
+        destination: String?,
+        flights: [Flight],
+        dict: [Int: [Flight]]
+    ) {
         self.id = id
-        self.name = name
+        self.destination = destination
+        self.flights = flights
+        self.dict = dict
     }
 }
 
@@ -34,18 +48,22 @@ public enum Service {
     case car
 }
 
-/*
 @Randomizable
-private class Trip {
+class Trip {
+    let id: Int
     let services: [Service]
     var status: String
     
-    init(services: [Service], status: String) {
+    required init(
+        _ id: Int,
+        services: [Service],
+        status: String
+    ) {
+        self.id = id
         self.services = services
         self.status = status
     }
 }
- */
 
 print(
     Flight.makeRandom(),
@@ -53,6 +71,5 @@ print(
     Flight.makeRandomWith(id: 1234),
     Service.makeRandom(),
     StructWithInit.makeRandom(),
-    StructWithInit.makeRandomWith(id: 123),
-    StructWithInit.makeRandomWith(name: "ciao")
+    StructWithInit.makeRandomWith(id: 123)
 )
