@@ -98,20 +98,7 @@ private extension RandomizableMacro {
         context: some MacroExpansionContext
     ) throws -> ExtensionDeclSyntax {
         try ExtensionDeclSyntax("extension \(type): Randomizable") {
-
-            let parameters: [Parameter] =  decl.firstInitializerParameters?.compactMap {
-                if let param = try? $0.toDeclParameter {
-                    return param
-                } else {
-                    context.diagnose(
-                        Diagnostic(
-                            node: $0,
-                            message: DiagnosticError.unsupportedSyntaxType
-                        )
-                    )
-                    return nil
-                }
-            } ?? []
+            let parameters = getParameters(decl: decl, context: context)
             
             let funcDeclParameters = parameters
                 .compactMap { "\n\($0.name): \($0.type) = \($0.makeRandomString)" }
@@ -138,41 +125,6 @@ private extension RandomizableMacro {
     
     static func generateExtensionForProtocol(decl: some DeclGroupSyntax, type: some TypeSyntaxProtocol) throws -> ExtensionDeclSyntax {
         try ExtensionDeclSyntax("Not implemented")
-    }
-    
-    // MARK: - Helpers
-    
-    static func getParameters(decl: some DeclGroupSyntax, context: some MacroExpansionContext) -> [Parameter] {
-        // Use init parameters if present else use stored properties
-        if let initParams = decl.firstInitializerParameters {
-            initParams.compactMap {
-                if let param = try? $0.toDeclParameter {
-                    return param
-                } else {
-                    context.diagnose(
-                        Diagnostic(
-                            node: $0,
-                            message: DiagnosticError.unsupportedSyntaxType
-                        )
-                    )
-                    return nil
-                }
-            }
-        } else {
-            decl.propertiesToInitialize.compactMap {
-                if let param = try? $0.toDeclParameter {
-                    return param
-                } else {
-                    context.diagnose(
-                        Diagnostic(
-                            node: $0,
-                            message: DiagnosticError.unsupportedSyntaxType
-                        )
-                    )
-                    return nil
-                }
-            }
-        }
     }
 }
 

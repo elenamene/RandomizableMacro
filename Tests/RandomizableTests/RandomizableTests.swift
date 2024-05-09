@@ -222,9 +222,6 @@ final class RandomizableTests: XCTestCase {
         )
     }
     
-    func testMacro_withEnum_withAssociatedValues() throws {
-    }
-    
     func testMacro_withClass() throws {
         assertMacroExpansion(
             """
@@ -286,15 +283,6 @@ final class RandomizableTests: XCTestCase {
     }
     
     func testMacro_withProtocol() throws {
-    }
-    
-    func testMacro_withPrivateType() throws {
-    }
-    
-    func testMacro_withPublicType() throws {
-    }
-    
-    func testMacro_withNonSupportedType() throws {
     }
 }
 
